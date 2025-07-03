@@ -1,35 +1,67 @@
-import { AutoAwesome } from '@mui/icons-material';
-
+import { Link } from 'react-router-dom';
+import { useLocation,useNavigate } from 'react-router-dom';
+import Button from './button';
+import { useState } from 'react';
+import { useEffect } from 'react';
+import axios from 'axios'
 export default function NavBar() {
+  const location=useLocation();
+  const [islooged,setIsLogged]=useState(false);
+  const navigate=useNavigate();
+  const checkLog= async ()=>{
+try {
+  const res=await axios.get('http://localhost:3000/auth/check',{ withCredentials: true });
+ 
+   setIsLogged(true)
+} catch (error) {
+  setIsLogged(false);
+  console.log(error);
+}
+  }
+
+  useEffect(()=>{
+
+checkLog();
+  },[location.pathname]);
+
+  const handleCampaign=()=>{
+     
+    navigate('/',{replace:true});
+   
+  }
+  const handleSignin=()=>{
+
+    navigate('/signin',{replace:true});
+  }
+
+  const handleLogout=()=>{
+navigate('/logout',{replace:true});
+  }
   return (
     <>
-      <div className="flex items-center justify-center pt-5">
+      <div className="flex relative items-center justify-center pt-5">
+        <Link to='/dashboard'>
         <img
           src="/Home_LOGO.png"
           className="w-25 transition-transform duration-700 ease-in-out hover:rotate-[360deg]"
           alt="Home logo"
         />
+        </Link>
         <div>
           <h1 className="text-3xl font-bold text-[#2b3a4b]">COLDCONNECT</h1>
           <p className="text-[#4ccbc4] pl-6">CONNECT . CONVERT</p>
         </div>
+        {location.pathname==='/dashboard'&& (
+        <div className='absolute right-10 -translate-y-1/2'>
+        <Button onClick={handleCampaign}>Add Campaign</Button>
+        </div>
+        )}
+        {
+           location.pathname==='/' && ( islooged ? <div className='absolute right-10 -translate-y-6'> <Button onClick={handleLogout} > Logout</Button> </div> : <div className='absolute right-10 -translate-y-6'> <Button onClick={handleSignin} >SignIn</Button></div>)
+        }
       </div>
 
-      <div className="flex justify-center">
-        <div className="relative group pt-6 w-[120px] h-[120px] flex items-center justify-center">
-          <img
-            src="/mail_logo.png"
-            className="w-[80px] transition-transform duration-300 group-hover:scale-110"
-            alt="mail logo"
-          />
-          <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 group-hover:opacity-100 opacity-0 backdrop-blur-md rounded-xl bg-transparent">
-            <span className="flex items-center gap-1 whitespace-nowrap text-[#08635e] text-lg font-semibold px-3 py-2 rounded-full bg-white/10 backdrop-blur-md shadow-lg shadow-cyan-400/40 animate-pulse">
-              <AutoAwesome fontSize="small" />
-              Generate with AI
-            </span>
-          </div>
-        </div>
-      </div>
+      
     </>
   );
 }

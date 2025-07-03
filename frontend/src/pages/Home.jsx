@@ -1,10 +1,12 @@
 import { useState } from "react";
-import  Button  from "../components/button.jsx";
-import  Card  from "../components/card";
-import Input  from "../components/input";
-import  Textarea  from "../components/textarea";
-import Label  from "../components/label";
+import Button from "../components/button.jsx";
+import Card from "../components/card";
+import Input from "../components/input";
+import Textarea from "../components/textarea";
+import Label from "../components/label";
 import GenerateAI from "../components/generateAI.jsx";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function HomePage() {
   const [campaignName, setCampaignName] = useState("");
@@ -14,32 +16,58 @@ export default function HomePage() {
   const [followUpDelay, setFollowUpDelay] = useState(2);
   const [followUpSubject, setFollowUpSubject] = useState("");
   const [followUpBody, setFollowUpBody] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = () => {
-    const data = {
+const data = {
       campaignName,
       subject,
       body,
       followUps: followUpEnabled
         ? [
-            {
-              delayInDays: followUpDelay,
-              subject: followUpSubject,
-              bodyTemplate: followUpBody,
-            },
-          ]
+          {
+            delayInDays: followUpDelay,
+            subject: followUpSubject,
+            bodyTemplate: followUpBody,
+          },
+        ]
         : [],
     };
+  const saveDataToApi = async () => {
+    
+try {
+  const res=await axios.post('http://localhost:3000/api/campaigns',data,{withCredentials:true});
+  if(res.status==200){
+    navigate('/dashboard');
+  }
+} catch (error) {
+  
+}
+  }
 
-    console.log("Submitting campaign:", data);
-    // TODO: Call backend API to save campaign
+  const handleSubmit = async () => {
+    try {
+      const res = await axios.get('http://localhost:3000/auth/check', { withCredentials: true })
+      if (res.status === 200) {
+        saveDataToApi();
+      }
+    } catch (err) {
+      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+        localStorage.setItem('pendingCampaign', JSON.stringify(data));
+        navigate("/signin", { replace: true });
+      } else {
+        console.error("Something went wrong:", err);
+      }
+    }
+
   };
 
   return (
-    <div className="p-6  max-w-3xl mx-auto ">
-       
-      <Card className="p-4 space-y-4">
-        
+    <>
+      <GenerateAI />
+      <div className="p-6  max-w-3xl mx-auto ">
+
+        <Card className="p-4 space-y-4">
+
           <div>
             <Label>Campaign Name</Label>
             <Input
@@ -104,12 +132,16 @@ export default function HomePage() {
             </div>
           )}
           <div className="flex justify-center">
-          <Button className="w-1/2 p-1 rounded-xl bg-[#30cfd0] hover: hover:shadow-[0_0_20px_rgba(0,255,255,0.7)] hover:scale-110 transition ease hover:bg-teal-400 font-bold" onClick={handleSubmit}>
-            Launch Campaign 
-          </Button>
-        </div>
-      </Card>
-    
-    </div>
+            <Button className="w-1/2 p-1 rounded-xl bg-[#30cfd0] hover: hover:shadow-[0_0_20px_rgba(0,255,255,0.7)] hover:scale-110 transition ease hover:bg-teal-400 font-bold" 
+            onClick={handleSubmit}
+            disabled={!campaignName&&!subject&&!body}
+            >
+              Launch Campaign
+            </Button>
+          </div>
+        </Card>
+
+      </div>
+    </>
   );
 }
